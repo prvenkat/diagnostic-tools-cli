@@ -1,0 +1,32 @@
+#!/usr/bin/env python
+#Importing the libraries
+import requests
+import json
+from akamai.edgegrid import EdgeGridAuth, EdgeRc
+import os
+from urllib.parse import urljoin
+import argparse
+import re
+
+edgerc_file = os.path.join(os.path.expanduser("~"), '.edgerc')
+edgerc = EdgeRc(edgerc_file)
+section="edgeworld"
+base_url = edgerc.get(section,'host')
+client_token=edgerc.get(section,'client_token')
+client_secret=edgerc.get(section,'client_secret')
+access_token=edgerc.get(section,'access_token')
+s = requests.Session()
+s.auth = EdgeGridAuth(
+client_token=client_token,
+client_secret=client_secret,
+access_token=access_token
+)
+parser = argparse.ArgumentParser()
+parser.add_argument("-i", "--ip", help="ip address")
+ipaddr=str(parser.parse_args())
+ipaddr=re.search('Namespace\(ip\=\'(.+)\'',ipaddr)
+ipaddr=ipaddr.group(1)
+base_url=str('https://')+str(base_url)
+result=s.get(urljoin(base_url,'/diagnostic-tools/v2/ip-addresses/'+ipaddr+'/geo-location'))
+print(json.dumps(result.json(),indent=4))
+
